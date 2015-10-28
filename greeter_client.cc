@@ -36,6 +36,7 @@
 #include <string>
 #include <time.h>
 #include <grpc++/grpc++.h>
+#include "greeter_client.h"
 
 #include "helloworld.grpc.pb.h"
 
@@ -44,16 +45,18 @@ using grpc::ClientContext;
 using grpc::Status;
 using helloworld::HelloRequest;
 using helloworld::HelloReply;
+using helloworld::FetchRequest;
+using helloworld::FetchReply;
+using helloworld::StoreRequest;
+using helloworld::StoreReply;
 using helloworld::Greeter;
 
-class GreeterClient {
- public:
-  GreeterClient(std::shared_ptr<Channel> channel)
+  GreeterClient::GreeterClient(std::shared_ptr<Channel> channel)
       : stub_(Greeter::NewStub(channel)) {}
 
   // Assambles the client's payload, sends it and presents the response back
   // from the server.
-  std::string SayHello(const std::string& user) {
+  std::string GreeterClient::SayHello(const std::string& user) {
     // Data we are sending to the server.
     HelloRequest request;
     request.set_name(user);
@@ -76,9 +79,46 @@ class GreeterClient {
     }
   }
 
- private:
-  std::unique_ptr<Greeter::Stub> stub_;
-};
+
+  int GreeterClient::Fetch (const std::string& path, char *buf, int *size) {
+    FetchRequest request;
+    request.set_path(path);
+
+
+    FetchReply *reply = new FetchReply();
+
+    ClientContext context;
+
+    Status status = stub_->Fetch(&context, request, reply);
+
+    if (status.ok()) {
+        buf = (char *)(reply->buf()).c_str();
+        *size = reply->size();
+        return 0;
+    } else {
+      return -1;
+    }
+  }
+
+
+  int GreeterClient::Store (const std::string& path, char *buf, int size) {
+    StoreRequest request;
+    request.set_path(path);
+    request.set_size(size);
+    request.set_buf(std::string(buf));
+
+    StoreReply reply;
+
+    ClientContext context;
+
+    Status status = stub_->Store(&context, request, &reply);
+
+    if (status.ok()) {
+        return reply.error();
+    } else {
+        return -1;
+    }
+  }
 
 /*struct timespec diff(struct timespec start, struct timespec end)
 {

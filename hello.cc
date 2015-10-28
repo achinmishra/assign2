@@ -10,15 +10,17 @@
 
 #define FUSE_USE_VERSION 26
 
+#include <iostream>
 #include <fuse.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grpc++/grpc++.h>
-#include "greeter_client.cc"
+#include "greeter_client.h"
 
 #include "helloworld.grpc.pb.h"
+
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -29,6 +31,7 @@ using helloworld::Greeter;
 
 static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
+static GreeterClient *ctx;
 
 static int hello_getattr(const char *path, struct stat *stbuf)
 {
@@ -44,6 +47,10 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 		stbuf->st_size = strlen(hello_str);
 	} else
 		res = -ENOENT;
+
+        std::string user("world");
+        std::string reply = ctx->SayHello(user);
+        std::cout << "Greeter received: " << reply << std::endl;
 
 	return res;
 }
@@ -111,6 +118,9 @@ int main(int argc, char *argv[])
 {
         GreeterClient greeter(
       grpc::CreateChannel("king-01:12348", grpc::InsecureCredentials()));
+
+        ctx = &greeter;
+
 	return fuse_main(argc, argv, &hello_oper, NULL);
         /*test*/
 }
