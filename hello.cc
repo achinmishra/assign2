@@ -112,4 +112,5 @@ int main(int argc, char *argv[])
         GreeterClient greeter(
       grpc::CreateChannel("king-01:12348", grpc::InsecureCredentials()));
 	return fuse_main(argc, argv, &hello_oper, NULL);
+        /*test*/
 }
