@@ -41,9 +41,12 @@ PROTOS_PATH = protos
 
 vpath %.proto $(PROTOS_PATH)
 
-all: system-check hello 
+all: system-check hello greeter_server 
 
 hello: helloworld.pb.o helloworld.grpc.pb.o hello.o greeter_client.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+greeter_server: helloworld.pb.o helloworld.grpc.pb.o greeter_server.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 %.grpc.pb.cc: %.proto
