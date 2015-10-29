@@ -49,85 +49,109 @@ using helloworld::FetchRequest;
 using helloworld::FetchReply;
 using helloworld::StoreRequest;
 using helloworld::StoreReply;
+using helloworld::StatRequest;
+using helloworld::StatReply;
 using helloworld::Greeter;
 
-  GreeterClient::GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
+GreeterClient::GreeterClient(std::shared_ptr<Channel> channel)
+	: stub_(Greeter::NewStub(channel)) {}
 
-  // Assambles the client's payload, sends it and presents the response back
-  // from the server.
-  std::string GreeterClient::SayHello(const std::string& user) {
-    // Data we are sending to the server.
-    HelloRequest request;
-    request.set_name(user);
+	// Assambles the client's payload, sends it and presents the response back
+	// from the server.
 
-    // Container for the data we expect from the server.
-    HelloReply reply;
+std::string GreeterClient::SayHello(const std::string& user) {
+		// Data we are sending to the server.
+		HelloRequest request;
+		request.set_name(user);
 
-    // Context for the client. It could be used to convey extra information to
-    // the server and/or tweak certain RPC behaviors.
-    ClientContext context;
+		// Container for the data we expect from the server.
+		HelloReply reply;
 
-    // The actual RPC.
-    Status status = stub_->SayHello(&context, request, &reply);
+		// Context for the client. It could be used to convey extra information to
+		// the server and/or tweak certain RPC behaviors.
+		ClientContext context;
 
-    // Act upon its status.
-    if (status.ok()) {
-      return reply.message();
-    } else {
-      return "RPC failed";
-    }
-  }
+		// The actual RPC.
+		Status status = stub_->SayHello(&context, request, &reply);
 
-
-  int GreeterClient::Fetch (const std::string& path, char *buf, int *size) {
-    FetchRequest request;
-    request.set_path(path);
+		// Act upon its status.
+		if (status.ok()) {
+			return reply.message();
+		} else {
+			return "RPC failed";
+		}
+	}
 
 
-    FetchReply *reply = new FetchReply();
-
-    ClientContext context;
-
-    Status status = stub_->Fetch(&context, request, reply);
-
-    if (status.ok()) {
-        buf = (char *)(reply->buf()).c_str();
-        *size = reply->size();
-        return 0;
-    } else {
-      return -1;
-    }
-  }
+int GreeterClient::Fetch (const std::string& path, char *buf, int *size) {
+	FetchRequest request;
+	request.set_path(path);
 
 
-  int GreeterClient::Store (const std::string& path, char *buf, int size) {
-    StoreRequest request;
-    request.set_path(path);
-    request.set_size(size);
-    request.set_buf(std::string(buf));
+	FetchReply *reply = new FetchReply();
 
-    StoreReply reply;
+	ClientContext context;
 
-    ClientContext context;
+	Status status = stub_->Fetch(&context, request, reply);
 
-    Status status = stub_->Store(&context, request, &reply);
+	if (status.ok()) {
+		buf = (char *)(reply->buf()).c_str();
+		*size = reply->size();
+		return 0;
+	} else {
+		return -1;
+	}
+}
 
-    if (status.ok()) {
-        return reply.error();
-    } else {
-        return -1;
-    }
-  }
+
+int GreeterClient::Store (const std::string& path, char *buf, int size) {
+	StoreRequest request;
+	request.set_path(path);
+	request.set_size(size);
+	request.set_buf(std::string(buf));
+
+	StoreReply reply;
+
+	ClientContext context;
+
+	Status status = stub_->Store(&context, request, &reply);
+
+	if (status.ok()) {
+		return reply.error();
+	} else {
+		return -1;
+	}
+}
+
+int GreeterClient::GetFileStat(const std::string& path, struct stat *stbuf) {
+	StatRequest request;
+	request.set_path(path);
+
+
+	StatReply *reply = new StatReply();
+
+	ClientContext context;
+
+	Status status = stub_->GetFileStat(&context, request, reply);
+
+	if (status.ok()) {
+		stbuf = (struct stat *)(reply->buf()).c_str();
+		//check file stats here after receving the whole stat buffer from server //ACHIN
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
 
 /*struct timespec diff(struct timespec start, struct timespec end)
-{
-        struct timespec temp;
-        if ((end.tv_nsec-start.tv_nsec)<0) {
-                temp.tv_sec = end.tv_sec-start.tv_sec-1;
-                temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
-        } else {
-                temp.tv_sec = end.tv_sec-start.tv_sec;
+  {
+  struct timespec temp;
+  if ((end.tv_nsec-start.tv_nsec)<0) {
+  temp.tv_sec = end.tv_sec-start.tv_sec-1;
+  temp.tv_nsec = 1000000000+end.tv_nsec-start.tv_nsec;
+  } else {
+  temp.tv_sec = end.tv_sec-start.tv_sec;
                 temp.tv_nsec = end.tv_nsec-start.tv_nsec;
         }
         return temp;
