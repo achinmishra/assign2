@@ -85,5 +85,5 @@ message StatRequest {
 message StatReply {
   int32 error = 1;
   string reason = 2;
-  bytes result = 3;
+  bytes buf = 3;
 }
